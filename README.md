@@ -17,3 +17,18 @@ v0.1 = MVP (OCR stub, parsing simple, contrôles de base, endpoint HTTP).
 ## Installation (à partir de v0.1.0)
 ```bash
 composer require your-vendor/invoiceiq-bundle
+
+## Configuration
+
+Clé racine : `invoice_iq`.
+
+```yaml
+# config/packages/invoice_iq.yaml
+invoice_iq:
+  ocr:
+    provider: 'tesseract'  # valeur par défaut
+  checks:
+    totals: true           # valeur par défaut
+    duplicates: true       # valeur par défaut
+    vat_format: true       # valeur par défaut
+
