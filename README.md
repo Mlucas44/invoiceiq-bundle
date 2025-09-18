@@ -1,3 +1,5 @@
+[![CI](https://github.com/Mlucas44/invoiceiq-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/Mlucas44/invoiceiq-bundle/actions/workflows/ci.yml)
+
 # InvoiceIQBundle
 
 Bundle Symfony **plug-and-play** pour **analyser et valider des factures** (PDF/JPG/PNG).  
