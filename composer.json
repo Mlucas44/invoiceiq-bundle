@@ -1,0 +1,20 @@
+{
+  "name": "mlucas/invoiceiq-bundle",
+  "description": "Analyse et validation de factures pour Symfony (OCR, règles, VIES plus tard, LLM optionnel).",
+  "type": "symfony-bundle",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.3",
+    "symfony/framework-bundle": "^7.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Mlucas\\InvoiceIQBundle\\": "src/"
+    }
+  },
+  "extra": {
+    "symfony": {
+      "extension-class": "Mlucas\\InvoiceIQBundle\\InvoiceIQBundle"
+    }
+  }
+}
