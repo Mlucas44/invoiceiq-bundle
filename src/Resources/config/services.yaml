@@ -4,9 +4,18 @@ services:
     autoconfigure: true
     public: false
 
+  # Enregistre tout le namespace du bundle
   YourVendor\InvoiceIQBundle\:
     resource: '../../*'
     exclude:
       - '../../DependencyInjection/'
       - '../../Resources/'
       - '../../Tests/'
+      - '../../Domain/'    # évite d’autowirer les DTO/modèles
+      - '../../Model/'
+    # Liaisons de paramètres → arguments typés/nommés
+    bind:
+      $ocrProvider: '%invoice_iq.ocr.provider%'
+      $checkTotals: '%invoice_iq.checks.totals%'
+      $checkDuplicates: '%invoice_iq.checks.duplicates%'
+      $checkVatFormat: '%invoice_iq.checks.vat_format%'
