@@ -1,6 +1,6 @@
 <?php
 
-namespace YourVendor\InvoiceIQBundle\Ocr;
+namespace Mlucas\InvoiceIQBundle\Ocr;
 
 interface OcrClientInterface
 {

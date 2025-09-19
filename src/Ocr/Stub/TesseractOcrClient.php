@@ -1,8 +1,8 @@
 <?php
 
-namespace YourVendor\InvoiceIQBundle\Ocr\Stub;
+namespace Mlucas\InvoiceIQBundle\Ocr\Stub;
 
-use YourVendor\InvoiceIQBundle\Ocr\OcrClientInterface;
+use Mlucas\InvoiceIQBundle\Ocr\OcrClientInterface;
 
 final class TesseractOcrClient implements OcrClientInterface
 {

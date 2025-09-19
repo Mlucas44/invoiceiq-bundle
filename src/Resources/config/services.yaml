@@ -29,3 +29,22 @@ services:
   invoiceiq.ocr.tesseract:
     alias: Mlucas\InvoiceIQBundle\Ocr\Stub\TesseractOcrClient
     public: false
+
+  # --- Validation pipeline ----------------------------------------------------
+
+  # Règle TotalsCheck (active/désactive + tolérance par param)
+  Mlucas\InvoiceIQBundle\Validation\Checks\TotalsCheck:
+    arguments:
+      $enabled: '%invoice_iq.checks.totals%'
+      $tolerance: '%invoice_iq.checks.totals_tolerance%'
+
+  # Chaîne qui exécute les checks (liste explicite v0.1)
+  Mlucas\InvoiceIQBundle\Validation\CheckerChain:
+    arguments:
+      $checks:
+        - '@Mlucas\InvoiceIQBundle\Validation\Checks\TotalsCheck'
+
+  # Alias public (facile à récupérer)
+  invoiceiq.validation.chain:
+    alias: Mlucas\InvoiceIQBundle\Validation\CheckerChain
+    public: true

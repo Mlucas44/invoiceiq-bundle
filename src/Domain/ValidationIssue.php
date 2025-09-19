@@ -1,6 +1,6 @@
 <?php
 
-namespace YourVendor\InvoiceIQBundle\Domain;
+namespace Mlucas\InvoiceIQBundle\Domain;
 
 final class ValidationIssue
 {
