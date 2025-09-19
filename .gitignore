@@ -1,0 +1,18 @@
+# Composer (une lib PHP ne versionne pas composer.lock)
+vendor/
+composer.lock
+
+# Sandbox / artefacts locaux
+sandbox/
+
+# Cache & rapports
+/.phpunit.cache/
+/coverage/
+.php-cs-fixer.cache
+
+# IDE / OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
