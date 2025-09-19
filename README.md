@@ -17,7 +17,7 @@ v0.1 = MVP (OCR stub, parsing simple, contrôles de base, endpoint HTTP).
 ## Installation (à partir de v0.1.0)
 ```bash
 composer require your-vendor/invoiceiq-bundle
-
+```
 ## Configuration
 
 Clé racine : `invoice_iq`.
@@ -54,3 +54,7 @@ Exemple de `ValidationReport` renvoyé par l’endpoint :
 ### OCR (v0.1)
 - `ocr.provider`: `tesseract` (par défaut) — implémentation **stub** (ne lance pas le binaire).  
   Utile pour tester le flux end-to-end. Une implémentation réelle sera ajoutée en v0.2.
+
+### Parsing (v0.1)
+Le service `TextInvoiceParser` extrait depuis le texte OCR : numéro, date (Y-m-d ou d-m-Y), devise, totaux (HT/Taxe/TTC).
+Les montants sont normalisés (virgule/point).
