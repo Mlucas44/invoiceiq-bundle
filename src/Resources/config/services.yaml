@@ -48,3 +48,7 @@ services:
   invoiceiq.validation.chain:
     alias: Mlucas\InvoiceIQBundle\Validation\CheckerChain
     public: true
+
+  Mlucas\InvoiceIQBundle\Validation\Checks\VatFormatCheck:
+    arguments:
+      $enabled: '%invoice_iq.checks.vat_format%'

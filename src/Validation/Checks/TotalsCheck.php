@@ -10,8 +10,8 @@ use Mlucas\InvoiceIQBundle\Validation\InvoiceCheckInterface;
 final class TotalsCheck implements InvoiceCheckInterface
 {
     public function __construct(
-        private bool $enabled,          // invoice_iq.checks.totals
-        private float $tolerance = 0.01 // invoice_iq.checks.totals_tolerance
+        private bool $enabled,
+        private float $tolerance = 0.01
     ) {}
 
     public function check(Invoice $invoice, ValidationReport $report): void
@@ -20,11 +20,18 @@ final class TotalsCheck implements InvoiceCheckInterface
             return;
         }
 
-        $ht  = $invoice->totals?->ht;
-        $tax = $invoice->totals?->tax;
-        $ttc = $invoice->totals?->ttc;
+        // 🔒 Pas d’accès à des propriétés : on passe par toArray()
+        $arr = $invoice->toArray();
+        $totals = $arr['totals'] ?? null;
 
-        // Si des valeurs manquent, on ne juge pas ici (la règle est “cohérence”, pas “présence”).
+        if (!is_array($totals)) {
+            return;
+        }
+
+        $ht  = isset($totals['ht'])  ? (float) $totals['ht']  : null;
+        $tax = isset($totals['tax']) ? (float) $totals['tax'] : null;
+        $ttc = isset($totals['ttc']) ? (float) $totals['ttc'] : null;
+
         if ($ht === null || $tax === null || $ttc === null) {
             return;
         }
@@ -33,16 +40,15 @@ final class TotalsCheck implements InvoiceCheckInterface
         $diff = abs($expected - $ttc);
 
         if ($diff > $this->tolerance) {
-            // code / message / severity – format v0.1
-            $issue = new ValidationIssue(
+            $severity = ($diff > 0.5) ? 'error' : 'warning';
+            $report->addIssue(new ValidationIssue(
                 code: 'TOTALS_MISMATCH',
-                severity: ($diff > 0.5 ? 'error' : 'warning'),
+                severity: $severity,
                 message: sprintf(
                     'Totaux incohérents: HT + Taxe = %.2f, TTC = %.2f (écart = %.2f > tolérance = %.2f)',
                     $expected, $ttc, $diff, $this->tolerance
                 )
-            );
-            $report->addIssue($issue);
+            ));
         }
     }
 }
