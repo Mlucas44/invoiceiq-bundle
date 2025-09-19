@@ -20,7 +20,8 @@ final class CheckerChain
 
     public function run(Invoice $invoice): ValidationReport
     {
-        $report = new ValidationReport();
+        // IMPORTANT: init à partir de l’Invoice (plus d’erreur de ctor)
+        $report = ValidationReport::fromInvoice($invoice);
 
         foreach ($this->checks as $check) {
             $check->check($invoice, $report);
