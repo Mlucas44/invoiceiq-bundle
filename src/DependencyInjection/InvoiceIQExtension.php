@@ -6,6 +6,8 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\DependencyInjection\Alias;
+use YourVendor\InvoiceIQBundle\Ocr\OcrClientInterface;
 
 final class InvoiceIQExtension extends Extension
 {
@@ -25,6 +27,11 @@ final class InvoiceIQExtension extends Extension
         if (is_file(__DIR__.'/../Resources/config/services.yaml')) {
             $loader->load('services.yaml');
         }
+
+        // Sélection dynamique du provider OCR en fonction de la config
+        $providerId = sprintf('invoiceiq.ocr.%s', $config['ocr']['provider']);
+        $container->setAlias('invoiceiq.ocr', new Alias($providerId, false));
+        $container->setAlias(OcrClientInterface::class, new Alias('invoiceiq.ocr', true));
     }
 
     // On force l'alias pour avoir "invoice_iq" (et pas "invoice_i_q")
