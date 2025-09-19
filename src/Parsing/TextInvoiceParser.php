@@ -1,9 +1,9 @@
 <?php
 
-namespace YourVendor\InvoiceIQBundle\Parsing;
+namespace Mlucas\InvoiceIQBundle\Parsing;
 
 use DateTimeImmutable;
-use YourVendor\InvoiceIQBundle\Domain\Invoice;
+use Mlucas\InvoiceIQBundle\Domain\Invoice;
 
 final class TextInvoiceParser
 {

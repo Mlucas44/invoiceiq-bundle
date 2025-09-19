@@ -1,10 +1,10 @@
 <?php
 
-namespace YourVendor\InvoiceIQBundle\Service;
+namespace Mlucas\InvoiceIQBundle\Service;
 
-use YourVendor\InvoiceIQBundle\Ocr\OcrClientInterface;
-use YourVendor\InvoiceIQBundle\Parsing\TextInvoiceParser;
-use YourVendor\InvoiceIQBundle\Domain\Invoice;
+use Mlucas\InvoiceIQBundle\Ocr\OcrClientInterface;
+use Mlucas\InvoiceIQBundle\Parsing\TextInvoiceParser;
+use Mlucas\InvoiceIQBundle\Domain\Invoice;
 
 final class InvoiceTextExtractor
 {

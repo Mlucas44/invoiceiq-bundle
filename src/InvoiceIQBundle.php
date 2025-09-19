@@ -1,6 +1,6 @@
 <?php
 
-namespace YourVendor\InvoiceIQBundle;
+namespace Mlucas\InvoiceIQBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
