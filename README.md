@@ -32,3 +32,21 @@ invoice_iq:
     duplicates: true       # valeur par défaut
     vat_format: true       # valeur par défaut
 
+## Contrat JSON (v0.1)
+
+Exemple de `ValidationReport` renvoyé par l’endpoint :
+
+```json
+{
+  "status": "ALERT",
+  "score": 82,
+  "fields": {
+    "invoice_number": "F2025-001",
+    "date": "2025-09-01",
+    "currency": "EUR",
+    "totals": { "ht": 98.76, "tax": 19.75, "ttc": 118.51 }
+  },
+  "issues": [
+    { "code": "VAT_FORMAT_SUSPECT", "severity": "warning", "message": "Numéro TVA non reconnu" }
+  ]
+}
