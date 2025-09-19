@@ -5,17 +5,27 @@ services:
     public: false
 
   # Enregistre tout le namespace du bundle
-  YourVendor\InvoiceIQBundle\:
+  Mlucas\InvoiceIQBundle\:
     resource: '../../*'
     exclude:
       - '../../DependencyInjection/'
       - '../../Resources/'
       - '../../Tests/'
-      - '../../Domain/'    # évite d’autowirer les DTO/modèles
-      - '../../Model/'
-    # Liaisons de paramètres → arguments typés/nommés
+      - '../../Domain/'   # évite d’autowirer les DTO/modèles
+      - '../../Model/' 
+    # Liaisons de paramètres → arguments nommés dans tes services
     bind:
       $ocrProvider: '%invoice_iq.ocr.provider%'
       $checkTotals: '%invoice_iq.checks.totals%'
       $checkDuplicates: '%invoice_iq.checks.duplicates%'
       $checkVatFormat: '%invoice_iq.checks.vat_format%'
+
+  # --- OCR providers (v0.1: stub Tesseract) -------------------------------
+
+  # Service concret (stub)
+  Mlucas\InvoiceIQBundle\Ocr\Stub\TesseractOcrClient: ~
+
+  # Alias "provider" pour pouvoir sélectionner via la config (ocr.provider)
+  invoiceiq.ocr.tesseract:
+    alias: Mlucas\InvoiceIQBundle\Ocr\Stub\TesseractOcrClient
+    public: false

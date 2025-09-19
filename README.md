@@ -50,3 +50,7 @@ Exemple de `ValidationReport` renvoyé par l’endpoint :
     { "code": "VAT_FORMAT_SUSPECT", "severity": "warning", "message": "Numéro TVA non reconnu" }
   ]
 }
+
+### OCR (v0.1)
+- `ocr.provider`: `tesseract` (par défaut) — implémentation **stub** (ne lance pas le binaire).  
+  Utile pour tester le flux end-to-end. Une implémentation réelle sera ajoutée en v0.2.
