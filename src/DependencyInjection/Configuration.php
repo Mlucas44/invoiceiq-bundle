@@ -30,6 +30,22 @@ final class Configuration implements ConfigurationInterface
                         ->booleanNode('duplicates')->defaultTrue()->end()
                         ->booleanNode('vat_format')->defaultTrue()->end()
                     ->end()
+                    ->children()
+                        ->arrayNode('checks')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('totals')->defaultTrue()->end()
+                                ->booleanNode('duplicates')->defaultTrue()->end()
+                                ->booleanNode('vat_format')->defaultTrue()->end()
+
+                                // NEW: tolérance d'arrondi pour la règle "totals"
+                                ->floatNode('totals_tolerance')
+                                    ->defaultValue(0.01)   // ±0,01
+                                    ->min(0.0)
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
                 ->end()
             ->end()
         ;
