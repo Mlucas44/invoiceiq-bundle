@@ -22,6 +22,7 @@ final class InvoiceIQExtension extends Extension
         $container->setParameter('invoice_iq.checks.duplicates', $config['checks']['duplicates']);
         $container->setParameter('invoice_iq.checks.vat_format', $config['checks']['vat_format']);
         $container->setParameter('invoice_iq.checks.totals_tolerance', $config['checks']['totals_tolerance']);
+        $container->setParameter('invoice_iq.checks.duplicates_window_days', $config['checks']['duplicates_window_days']);
 
         // Charge les services du bundle si le fichier existe
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));

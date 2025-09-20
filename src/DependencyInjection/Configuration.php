@@ -37,7 +37,7 @@ final class Configuration implements ConfigurationInterface
                                 ->booleanNode('totals')->defaultTrue()->end()
                                 ->booleanNode('duplicates')->defaultTrue()->end()
                                 ->booleanNode('vat_format')->defaultTrue()->end()
-
+                                ->integerNode('duplicates_window_days')->defaultValue(30)->min(1)->end()
                                 // NEW: tolérance d'arrondi pour la règle "totals"
                                 ->floatNode('totals_tolerance')
                                     ->defaultValue(0.01)   // ±0,01
