@@ -47,6 +47,15 @@ final class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('http')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->arrayNode('allowed_mimes')
+                            ->prototype('scalar')->end()
+                            ->defaultValue(['application/pdf','image/png','image/jpeg','text/plain'])
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 

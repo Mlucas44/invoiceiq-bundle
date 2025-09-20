@@ -19,6 +19,7 @@ services:
       $checkTotals: '%invoice_iq.checks.totals%'
       $checkDuplicates: '%invoice_iq.checks.duplicates%'
       $checkVatFormat: '%invoice_iq.checks.vat_format%'
+      $allowedMimes: '%invoice_iq.http.allowed_mimes%'
 
   # --- OCR providers (v0.1: stub Tesseract) -------------------------------
 
