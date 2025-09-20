@@ -32,6 +32,8 @@ invoice_iq:
     totals_tolerance: 0.01 # tolérance d’arrondi
     duplicates: true       # valeur par défaut
     vat_format: true       # valeur par défaut
+    duplicates_window_days: 30
+
 ```
 ## Contrat JSON (v0.1)
 
