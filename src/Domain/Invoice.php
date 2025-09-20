@@ -9,8 +9,11 @@ final class Invoice
     /** @var InvoiceLine[] */
     private array $lines = [];
 
-    // NEW: champ optionnel pour la TVA
+    // TVA optionnelle
     private ?string $vatNumber = null;
+
+    // NEW: hash optionnel du fichier source (SHA-256)
+    private ?string $sourceFileHash = null;
 
     public function __construct(
         private ?string $invoiceNumber = null,
@@ -28,9 +31,8 @@ final class Invoice
     public function getTotalHt(): ?float { return $this->totalHt; }
     public function getTax(): ?float { return $this->tax; }
     public function getTotalTtc(): ?float { return $this->totalTtc; }
-
-    /** NEW */
     public function getVatNumber(): ?string { return $this->vatNumber; }
+    public function getSourceFileHash(): ?string { return $this->sourceFileHash; }
 
     /** @return InvoiceLine[] */
     public function getLines(): array { return $this->lines; }
@@ -40,9 +42,7 @@ final class Invoice
         $this->lines[] = $line;
     }
 
-    /**
-     * NEW: “builder” immuable pour renseigner/mettre à jour le n° TVA
-     */
+    /** Renseigne/maj le n° TVA (immutabilité) */
     public function withVatNumber(?string $vat): self
     {
         $clone = clone $this;
@@ -50,9 +50,33 @@ final class Invoice
         return $clone;
     }
 
+    /** NEW: calcule et pose le hash depuis un chemin de fichier (SHA-256) */
+    public function withSourceFile(string $path): self
+    {
+        $clone = clone $this;
+        // @ supprime l’avertissement si le fichier n’existe pas ; retournera null
+        $clone->sourceFileHash = @hash_file('sha256', $path) ?: null;
+        return $clone;
+    }
+
+    /** NEW: calcule et pose le hash depuis des bytes */
+    public function withSourceBytes(string $bytes): self
+    {
+        $clone = clone $this;
+        $clone->sourceFileHash = hash('sha256', $bytes);
+        return $clone;
+    }
+
+    /** NEW: pose directement un hash déjà calculé */
+    public function withSourceFileHash(?string $hash): self
+    {
+        $clone = clone $this;
+        $clone->sourceFileHash = $hash ? strtolower(trim($hash)) : null;
+        return $clone;
+    }
+
     /**
-     * NEW (optionnel) : fabrique depuis un array (utile pour tes scripts sandbox).
-     * Attend le même schéma que toArray().
+     * Fabrique depuis un array (même schéma que toArray()).
      */
     public static function fromArray(array $a): self
     {
@@ -74,15 +98,21 @@ final class Invoice
             totalTtc: $ttc
         );
 
-        // essaie plusieurs clés possibles pour la TVA
+        // TVA (essaie plusieurs clés)
         foreach (['vat_number', 'vat', 'tva', 'tva_number'] as $k) {
             if (isset($a[$k]) && is_scalar($a[$k])) {
-                return $inv->withVatNumber((string)$a[$k]);
+                $inv = $inv->withVatNumber((string)$a[$k]);
+                break;
             }
         }
 
-        return $inv;
+        // NEW: hash fourni (optionnel)
+        if (isset($a['source_file_hash']) && is_scalar($a['source_file_hash'])) {
+            $inv = $inv->withSourceFileHash((string)$a['source_file_hash']);
         }
+
+        return $inv;
+    }
 
     /** Représentation stable pour le rapport JSON */
     public function toArray(): array
@@ -98,9 +128,13 @@ final class Invoice
             ],
         ];
 
-        // NEW: on n’affiche la TVA que si elle est présente
         if ($this->vatNumber !== null) {
             $out['vat_number'] = $this->vatNumber;
+        }
+
+        // NEW: utile en debug (tu peux l’omettre côté API publique si tu préfères)
+        if ($this->sourceFileHash !== null) {
+            $out['source_file_hash'] = $this->sourceFileHash;
         }
 
         return $out;
