@@ -52,3 +52,14 @@ services:
   Mlucas\InvoiceIQBundle\Validation\Checks\VatFormatCheck:
     arguments:
       $enabled: '%invoice_iq.checks.vat_format%'
+      $windowDays: '%invoice_iq.checks.vat_format_window_days%'
+
+  # Store mémoire
+  Mlucas\InvoiceIQBundle\Storage\InMemoryRecentHashStore: ~
+  Mlucas\InvoiceIQBundle\Storage\RecentHashStoreInterface: '@Mlucas\InvoiceIQBundle\Storage\InMemoryRecentHashStore'
+
+  # DuplicateCheck avec bindings des paramètres
+  Mlucas\InvoiceIQBundle\Validation\Checks\DuplicateCheck:
+    bind:
+      $enabled: '%invoice_iq.checks.duplicates%'
+      $windowDays: '%invoice_iq.checks.duplicates_window_days%'
