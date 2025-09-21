@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use Mlucas\InvoiceIQBundle\Application\ValidatorFacade;
 use Mlucas\InvoiceIQBundle\Event\PreValidateEvent;
 use Mlucas\InvoiceIQBundle\Event\PostValidateEvent;
+use Mlucas\InvoiceIQBundle\Storage\StorageInterface;   // NEW
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,6 +20,8 @@ final class ValidateController
         private readonly ValidatorFacade $validator,
         private readonly LoggerInterface $logger,
         private readonly EventDispatcherInterface $dispatcher,
+        private readonly StorageInterface $storage,     // NEW
+        private readonly bool $storageEnabled = false,  // NEW (bind via config)
         private readonly array $allowedMimes = ['application/pdf','image/png','image/jpeg','text/plain'],
     ) {}
 
@@ -54,11 +57,23 @@ final class ValidateController
             // Pipeline interne (OCR stub -> Parser -> CheckerChain)
             $report = $this->validator->validateUploadedFile($file);
 
+            // NEW: si le stockage est activé, on enregistre l’original et on ajoute storage_key
+            if ($this->storageEnabled) {
+                $storageKey = $this->storage->store($file, [
+                    'sha256'   => $hash !== '' ? $hash : null,
+                    'size'     => $size,
+                    'mime'     => $mime,
+                    'original' => $originalName,
+                    'at'       => new DateTimeImmutable(),
+                ]);
+                $report = $report->withStorageKey($storageKey);
+            }
+
             $ms = (microtime(true) - $t0) * 1000.0;
 
             // ---------- POST_VALIDATE ----------
             $this->dispatcher->dispatch(new PostValidateEvent(
-                invoice: $report->getFields(),     // l’Invoice contenu dans le report
+                invoice: $report->getFields(),
                 report:  $report,
                 durationMs: $ms,
                 sha256: $hash,
@@ -71,7 +86,6 @@ final class ValidateController
                 'ms'   => (int) $ms,
             ]);
 
-            // Renvoi JSON + hash source (utile pour corrélation)
             $payload = $report->toArray();
             if ($hash !== '') {
                 $payload['source_file_hash'] = $hash;
