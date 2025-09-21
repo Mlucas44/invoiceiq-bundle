@@ -61,3 +61,48 @@ Exemple de `ValidationReport` renvoyé par l’endpoint :
 ### Parsing (v0.1)
 Le service `TextInvoiceParser` extrait depuis le texte OCR : numéro, date (Y-m-d ou d-m-Y), devise, totaux (HT/Taxe/TTC).
 Les montants sont normalisés (virgule/point).
+
+
+```php
+// src/EventSubscriber/InvoiceIQSubscriber.php (dans l’app hôte)
+namespace App\EventSubscriber;
+
+use Mlucas\InvoiceIQBundle\Event\PreValidateEvent;
+use Mlucas\InvoiceIQBundle\Event\PostValidateEvent;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+final class InvoiceIQSubscriber implements EventSubscriberInterface
+{
+    public function __construct(private LoggerInterface $logger) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            PreValidateEvent::class  => 'onPre',
+            PostValidateEvent::class => 'onPost',
+        ];
+    }
+
+    public function onPre(PreValidateEvent $e): void
+    {
+        $this->logger->info('pre_validate', [
+            'file'   => $e->originalFilename,
+            'size'   => $e->size,
+            'mime'   => $e->mimeType,
+            'sha256' => $e->sha256,
+            'at'     => $e->receivedAt->format(DATE_ATOM),
+        ]);
+    }
+
+    public function onPost(PostValidateEvent $e): void
+    {
+        $this->logger->info('post_validate', [
+            'sha256'      => $e->sha256,
+            'duration_ms' => $e->durationMs,
+            'status'      => $e->report->getStatus(),
+            'score'       => $e->report->getScore(),
+        ]);
+    }
+}
+```
