@@ -2,8 +2,12 @@
 
 namespace Mlucas\InvoiceIQBundle\Http;
 
+use DateTimeImmutable;
 use Mlucas\InvoiceIQBundle\Application\ValidatorFacade;
+use Mlucas\InvoiceIQBundle\Event\PreValidateEvent;
+use Mlucas\InvoiceIQBundle\Event\PostValidateEvent;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -14,6 +18,7 @@ final class ValidateController
     public function __construct(
         private readonly ValidatorFacade $validator,
         private readonly LoggerInterface $logger,
+        private readonly EventDispatcherInterface $dispatcher,
         private readonly array $allowedMimes = ['application/pdf','image/png','image/jpeg','text/plain'],
     ) {}
 
@@ -33,24 +38,53 @@ final class ValidateController
 
         $t0   = microtime(true);
         $size = $file->getSize() ?? 0;
-        $hash = @hash_file('sha256', $file->getPathname()) ?: null;
+        $hash = (string) @hash_file('sha256', $file->getPathname()); // string vide si échec
+        $originalName = $file->getClientOriginalName() ?: $file->getFilename();
+
+        // ---------- PRE_VALIDATE ----------
+        $this->dispatcher->dispatch(new PreValidateEvent(
+            originalFilename: $originalName,
+            size: $size,
+            mimeType: $mime,
+            sha256: $hash,
+            receivedAt: new DateTimeImmutable(),
+        ));
 
         try {
+            // Pipeline interne (OCR stub -> Parser -> CheckerChain)
             $report = $this->validator->validateUploadedFile($file);
+
+            $ms = (microtime(true) - $t0) * 1000.0;
+
+            // ---------- POST_VALIDATE ----------
+            $this->dispatcher->dispatch(new PostValidateEvent(
+                invoice: $report->getFields(),     // l’Invoice contenu dans le report
+                report:  $report,
+                durationMs: $ms,
+                sha256: $hash,
+            ));
 
             $this->logger->debug('invoiceiq.validate ok', [
                 'mime' => $mime,
                 'size' => $size,
                 'hash' => $hash,
-                'ms'   => (int) ((microtime(true) - $t0) * 1000),
+                'ms'   => (int) $ms,
             ]);
 
-            return new JsonResponse($report->toArray(), 200);
+            // Renvoi JSON + hash source (utile pour corrélation)
+            $payload = $report->toArray();
+            if ($hash !== '') {
+                $payload['source_file_hash'] = $hash;
+            }
+
+            return new JsonResponse($payload, 200);
+
         } catch (\Throwable $e) {
             $this->logger->error('invoiceiq.validate failed', [
-                'mime' => $mime, 'size' => $size, 'hash' => $hash, 'ex' => $e::class, 'msg' => $e->getMessage(),
+                'mime' => $mime, 'size' => $size, 'hash' => $hash,
+                'ex' => $e::class, 'msg' => $e->getMessage(),
             ]);
-            // Pour v0.1 on renvoie une 500 générique (tu pourras raffiner plus tard)
+
             return new JsonResponse(['error' => 'internal error'], 500);
         }
     }
