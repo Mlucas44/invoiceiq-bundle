@@ -44,6 +44,16 @@ final class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('storage')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultFalse()->end()
+                        ->scalarNode('adapter')->defaultValue('local')->end() // v0.1: 'local' seulement
+                        ->scalarNode('dir')
+                            ->defaultValue('%kernel.project_dir%/var/invoiceiq')
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
