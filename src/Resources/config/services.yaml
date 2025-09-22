@@ -67,3 +67,10 @@ services:
   Mlucas\InvoiceIQBundle\Http\ValidateController:
     public: true
     tags: ['controller.service_arguments']
+
+  Mlucas\InvoiceIQBundle\Storage\LocalStorage:
+    arguments:
+      $baseDir: '%invoice_iq.storage.dir%'
+
+  # v0.1: un seul adapter => alias direct
+  Mlucas\InvoiceIQBundle\Storage\StorageInterface: '@Mlucas\InvoiceIQBundle\Storage\LocalStorage'
