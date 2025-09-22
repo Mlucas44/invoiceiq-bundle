@@ -106,3 +106,14 @@ final class InvoiceIQSubscriber implements EventSubscriberInterface
     }
 }
 ```
+
+### Stockage (optionnel)
+
+```yaml
+# config/packages/invoice_iq.yaml
+invoice_iq:
+  storage:
+    enabled: true          # false par défaut
+    adapter: local         # v0.1
+    dir: '%kernel.project_dir%/var/invoiceiq'
+```
