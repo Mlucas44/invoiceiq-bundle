@@ -16,5 +16,8 @@
     "symfony": {
       "extension-class": "Mlucas\\InvoiceIQBundle\\InvoiceIQBundle"
     }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
   }
 }
