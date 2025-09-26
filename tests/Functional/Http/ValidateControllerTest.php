@@ -12,9 +12,9 @@ use Mlucas\InvoiceIQBundle\Http\ValidateController;
 use Mlucas\InvoiceIQBundle\Application\ValidatorFacade;
 use Mlucas\InvoiceIQBundle\Domain\Invoice;
 use Mlucas\InvoiceIQBundle\Domain\ValidationReport;
-use DateTimeImmutable;
+use Mlucas\InvoiceIQBundle\Storage\StorageInterface;
 
-class ValidateControllerTest extends TestCase
+final class ValidateControllerTest extends TestCase
 {
     public function test_post_multipart_returns_json_contract(): void
     {
@@ -38,18 +38,24 @@ class ValidateControllerTest extends TestCase
             )
         );
 
+        // 3) Mock de storage (introduit par l'issue #13)
+        $storage = $this->createMock(StorageInterface::class);
+
+        // ⚠️ Ordre des arguments : adapte si dans ton contrôleur
+        // l'ordre est différent. La plupart du temps on a :
+        // (validator, logger, dispatcher, storage, allowedMimes)
         $controller = new ValidateController(
-            validator:  $facade,
-            logger:     new NullLogger(),
-            dispatcher: new EventDispatcher(),
-            allowedMimes: ['application/pdf','image/png','image/jpeg','text/plain'] // <- 4e arg requis
+            validator:    $facade,
+            logger:       new NullLogger(),
+            dispatcher:   new EventDispatcher(),
+            storage:      $storage,
+            allowedMimes: ['application/pdf','image/png','image/jpeg','text/plain']
         );
 
-        // 3) Requête avec champ 'file'
-        $request = Request::create('/_invoiceiq/validate', 'POST', [], [], ['file' => $uploaded]);
-
-        // 4) Appel + assertions
+        // 4) Requête avec champ 'file'
+        $request  = Request::create('/_invoiceiq/validate', 'POST', [], [], ['file' => $uploaded]);
         $response = $controller->validate($request);
+
         $this->assertSame(200, $response->getStatusCode());
 
         $data = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
