@@ -16,6 +16,16 @@ final class TextInvoiceParserTest extends TestCase
         TTC: 118.51
         TXT;
 
+        $text = <<<TXT
+        Facture F2025-001
+        Date: 2025-09-01
+        Devise: EUR
+
+        Total HT: 98.76
+        TVA: 19.75
+        Total TTC: 118.51
+        TXT;
+
         $parser  = new TextInvoiceParser();
         $invoice = $parser->parse($text);
 

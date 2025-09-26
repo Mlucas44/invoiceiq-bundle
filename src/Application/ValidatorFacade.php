@@ -8,7 +8,7 @@ use Mlucas\InvoiceIQBundle\Parsing\TextInvoiceParser;
 use Mlucas\InvoiceIQBundle\Validation\CheckerChain;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-final class ValidatorFacade
+class ValidatorFacade
 {
     public function __construct(
         private readonly OcrClientInterface $ocr,
