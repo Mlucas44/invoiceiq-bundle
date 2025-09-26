@@ -14,7 +14,7 @@ use Mlucas\InvoiceIQBundle\Domain\Invoice;
 use Mlucas\InvoiceIQBundle\Domain\ValidationReport;
 use DateTimeImmutable;
 
-final class ValidateControllerTest extends TestCase
+class ValidateControllerTest extends TestCase
 {
     public function test_post_multipart_returns_json_contract(): void
     {

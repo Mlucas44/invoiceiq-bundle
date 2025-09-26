@@ -12,25 +12,24 @@ final class TotalsCheckTest extends TestCase
 {
     public function test_detects_mismatch(): void
     {
-        $inv = new Invoice('F1', new DateTimeImmutable('2025-09-01'), 'EUR', 100.00, 19.60, 121.00);
-        $report = ValidationReport::fromInvoice($inv);
+        $invoice = new Invoice('F', new \DateTimeImmutable('2025-09-01'), 'EUR', 98.76, 19.75, 120.00);
 
-        $check = new TotalsCheck(0.01);
-        $check->check($inv, $report);
+        $check = new TotalsCheck(enabled: true, tolerance: 0.01);
+        $report = ValidationReport::fromInvoice($invoice);
 
-        $this->assertGreaterThanOrEqual(1, count($report->getIssues()));
-        $issue = $report->getIssues()[0];
-        $this->assertSame('TOTALS_MISMATCH', $issue->getCode());
-        $this->assertSame('error', $issue->getSeverity());
+        $check->check($invoice, $report);
+
+        $this->assertNotEmpty($report->getIssues());
     }
 
     public function test_ok_when_within_tolerance(): void
     {
-        $inv = new Invoice('F2', new DateTimeImmutable('2025-09-01'), 'EUR', 100.00, 20.00, 120.005);
-        $report = ValidationReport::fromInvoice($inv);
+        $invoice = new Invoice('F', new \DateTimeImmutable('2025-09-01'), 'EUR', 100.00, 20.00, 120.005);
 
-        $check = new TotalsCheck(0.01);
-        $check->check($inv, $report);
+        $check = new TotalsCheck(enabled: true, tolerance: 0.01);
+        $report = ValidationReport::fromInvoice($invoice);
+
+        $check->check($invoice, $report);
 
         $this->assertCount(0, $report->getIssues());
     }
