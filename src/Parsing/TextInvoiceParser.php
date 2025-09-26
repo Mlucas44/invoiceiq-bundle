@@ -69,17 +69,22 @@ final class TextInvoiceParser
      */
     private function matchTotals(string $text): array
     {
-        $ht  = $this->firstAmount(
-            $text,
-            '/\b(?:total\s*ht|subtotal|net\s*amount)\b[^\d\-]*([0-9][0-9\.\,\s\']*)/i'
-        );
-        $tax = $this->firstAmount(
-            $text,
-            '/\b(?:tva|tax|vat)\b[^\d\-]*([0-9][0-9\.\,\s\']*)/i'
-        );
+        // TTC : NE PAS matcher un simple "Total" sinon "Total HT" passera pour TTC.
         $ttc = $this->firstAmount(
             $text,
-            '/\b(?:total\s*ttc|total\s*due|amount\s*due|total\b)\b[^\d\-]*([0-9][0-9\.\,\s\']*)/i'
+            '/\b(?:total\s*ttc|ttc|grand\s*total|total\s*due|amount\s*due)\b[^\d\-+]*([-+]?\d+(?:[.,]\d{1,2})?)/i'
+        );
+
+        // HT / Subtotal
+        $ht  = $this->firstAmount(
+            $text,
+            '/\b(?:total\s*ht|ht\b|hors\s*taxe|subtotal|net\s*amount)\b[^\d\-+]*([-+]?\d+(?:[.,]\d{1,2})?)/i'
+        );
+
+        // Taxes
+        $tax = $this->firstAmount(
+            $text,
+            '/\b(?:tva|taxe|tax|vat)\b[^\d\-+]*([-+]?\d+(?:[.,]\d{1,2})?)/i'
         );
 
         return [$ht, $tax, $ttc];
@@ -114,6 +119,6 @@ final class TextInvoiceParser
             $s = str_replace(',', '.', $s);      // virgule = décimal (fr)
         }
 
-        return is_numeric($s) ? (float)$s : null;
+        return is_numeric($s) ? (float) $s : null;
     }
 }

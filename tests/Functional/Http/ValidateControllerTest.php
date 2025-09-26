@@ -34,14 +34,15 @@ class ValidateControllerTest extends TestCase
         $facade = $this->createMock(ValidatorFacade::class);
         $facade->method('validateUploadedFile')->willReturn(
             ValidationReport::fromInvoice(
-                new Invoice('FTEST', new DateTimeImmutable('2025-09-01'), 'EUR', 10.0, 2.0, 12.0)
+                new Invoice('FTEST', new \DateTimeImmutable('2025-09-01'), 'EUR', 10.0, 2.0, 12.0)
             )
         );
 
         $controller = new ValidateController(
-            validator: $facade,
-            logger: new NullLogger(),
-            dispatcher: new EventDispatcher()
+            validator:  $facade,
+            logger:     new NullLogger(),
+            dispatcher: new EventDispatcher(),
+            allowedMimes: ['application/pdf','image/png','image/jpeg','text/plain'] // <- 4e arg requis
         );
 
         // 3) Requête avec champ 'file'
