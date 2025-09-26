@@ -1,76 +1,137 @@
 [![CI](https://github.com/Mlucas44/invoiceiq-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/Mlucas44/invoiceiq-bundle/actions/workflows/ci.yml)
 
-# InvoiceIQBundle
+# InvoiceIQBundle (v0.1)
 
-Bundle Symfony **plug-and-play** pour **analyser et valider des factures** (PDF/JPG/PNG).  
-v0.1 = MVP (OCR stub, parsing simple, contrôles de base, endpoint HTTP).
+Bundle Symfony **plug-and-play** pour **analyser et valider des factures** (PDF/JPG/PNG/TXT).  
+v0.1 = MVP : OCR *stub* → parsing texte → pipeline de vérifications (Totaux / TVA / Doublons) → **endpoint HTTP** qui renvoie un **JSON contract**.
+
+---
+
+## Sommaire
+- [InvoiceIQBundle (v0.1)](#invoiceiqbundle-v01)
+  - [Sommaire](#sommaire)
+  - [Pourquoi](#pourquoi)
+  - [Installation](#installation)
+  - [Configuration minimale](#configuration-minimale)
+  - [Utilisation (HTTP)](#utilisation-http)
+  - [Contrat JSON](#contrat-json)
+  - [Événements (pre\_validate / post\_validate)](#événements-pre_validate--post_validate)
+  - [Exemple de subscriber](#exemple-de-subscriber)
+  - [Stockage optionnel (OFF par défaut)](#stockage-optionnel-off-par-défaut)
+  - [Troubleshooting](#troubleshooting)
+  - [Versionning \& licence](#versionning--licence)
+
+---
 
 ## Pourquoi
-- Extraire des champs clés (numéro, date, devise, totaux)
-- Lancer des **contrôles** (totaux cohérents, format TVA, doublons)
-- Renvoyer un **rapport JSON** (status/score/issues)
+- Extraire rapidement les champs clés (numéro, date, devise, totaux).
+- Enchaîner des **contrôles** (cohérence des totaux, format de TVA plausible, détection de doublons basés sur le hash).
+- Obtenir un **rapport JSON** normalisé (status / score / fields / issues).
 
-## État du projet
-- `v0.1 (MVP)` en cours — voir **Issues** (milestone v0.1)
-- Licence: MIT
+---
 
-## Installation (à partir de v0.1.0)
+## Installation
+
 ```bash
-composer require your-vendor/invoiceiq-bundle
+composer require mlucas44/invoiceiq-bundle:^0.1
 ```
-## Configuration
 
-Clé racine : `invoice_iq`.
+Ajoutez les routes du bundle (si non importées automatiquement) :
 
-```yaml
+```yml
+# config/routes/invoiceiq.yaml (APP HÔTE)
+invoiceiq:
+  resource: '@InvoiceIQBundle/Resources/config/routes.yaml'
+  prefix: /
+```
+
+
+## Configuration minimale
+
+Clé racine : invoice_iq.
+```yml
 # config/packages/invoice_iq.yaml
 invoice_iq:
   ocr:
-    provider: 'tesseract'  # valeur par défaut
+    provider: 'tesseract'          # v0.1 utilise un stub (aucun appel binaire)
   checks:
-    totals: true           # valeur par défaut
-    totals_tolerance: 0.01 # tolérance d’arrondi
-    duplicates: true       # valeur par défaut
-    vat_format: true       # valeur par défaut
-    duplicates_window_days: 30
-
+    totals: true                   # vérifie HT + Taxe = TTC (avec tolérance)
+    duplicates: true               # détection doublons via hash mémoire
+    vat_format: true               # vérif heuristique du format TVA
+  totals_tolerance: 0.01           # tolérance d’arrondi (ex: 1 centime)
+  storage:
+    enabled: false                 # OFF par défaut (voir section Stockage)
 ```
-## Contrat JSON (v0.1)
+MIME types acceptés v0.1 : application/pdf, image/png, image/jpeg, text/plain.
 
-Exemple de `ValidationReport` renvoyé par l’endpoint :
+## Utilisation (HTTP)
 
+Endpoint : POST /_invoiceiq/validate (multipart, champ file)
+
+cURL
+```bash
+curl -F "file=@/chemin/vers/facture.pdf" http://127.0.0.1:8000/_invoiceiq/validate
+```
+Postman
+
+- Méthode POST
+- URL : http://127.0.0.1:8000/_invoiceiq/validate
+- Body → form-data → clé file (type File) → choisissez un fichier
+
+## Contrat JSON
 ```json
 {
-  "status": "ALERT",
-  "score": 82,
+  "status": "ALERT",          // "OK" | "ALERT" | "REJECT"
+  "score": 75,                // 0..100 (diminue avec les issues)
   "fields": {
     "invoice_number": "F2025-001",
     "date": "2025-09-01",
     "currency": "EUR",
+    "vat_number": "FR12345678901",
     "totals": { "ht": 98.76, "tax": 19.75, "ttc": 118.51 }
   },
   "issues": [
-    { "code": "VAT_FORMAT_SUSPECT", "severity": "warning", "message": "Numéro TVA non reconnu" }
-  ]
+    { "code": "TOTALS_MISMATCH", "severity": "error", "message": "Totaux incohérents ..." }
+  ],
+  "source_file_hash": "1f9f13f2cf2bba5a7731...",   // SHA-256 de l’original
+  "storage_key": "2025/09/01/abcd1234.pdf"         // présent si storage.enabled = true
 }
 ```
-### OCR (v0.1)
-- `ocr.provider`: `tesseract` (par défaut) — implémentation **stub** (ne lance pas le binaire).  
-  Utile pour tester le flux end-to-end. Une implémentation réelle sera ajoutée en v0.2.
+- status/score : agrégés par la pipeline de checks.
+- issues[].severity : "warning" ou "error".
 
-### Parsing (v0.1)
-Le service `TextInvoiceParser` extrait depuis le texte OCR : numéro, date (Y-m-d ou d-m-Y), devise, totaux (HT/Taxe/TTC).
-Les montants sont normalisés (virgule/point).
+## Événements (pre_validate / post_validate)
 
+Deux hooks Symfony pour étendre côté app hôte :
 
+invoiceiq.pre_validate
+
+- Quand : juste avant le traitement.
+- Payload (PreValidateEvent) :
+  - originalFilename (string)
+  - mimeType (string)
+  - size (int)
+  - sha256 (string|null)
+  - receivedAt (DateTimeImmutable)
+
+invoiceiq.post_validate
+
+- Quand : juste après le traitement.
+- Payload (PostValidateEvent) :
+  - invoice (Mlucas\InvoiceIQBundle\Domain\Invoice)
+  - report (Mlucas\InvoiceIQBundle\Domain\ValidationReport)
+  - durationMs (float)
+  - sha256 (string|null)
+
+## Exemple de subscriber
 ```php
-// src/EventSubscriber/InvoiceIQSubscriber.php (dans l’app hôte)
-namespace App\EventSubscriber;
+<?php
+namespace App\Subscriber;
 
 use Mlucas\InvoiceIQBundle\Event\PreValidateEvent;
 use Mlucas\InvoiceIQBundle\Event\PostValidateEvent;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Psr\Log\LoggerInterface;
 
 final class InvoiceIQSubscriber implements EventSubscriberInterface
 {
@@ -79,41 +140,54 @@ final class InvoiceIQSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            PreValidateEvent::class  => 'onPre',
-            PostValidateEvent::class => 'onPost',
+            PreValidateEvent::NAME  => 'onPreValidate',
+            PostValidateEvent::NAME => 'onPostValidate',
         ];
     }
 
-    public function onPre(PreValidateEvent $e): void
+    public function onPreValidate(PreValidateEvent $e): void
     {
-        $this->logger->info('pre_validate', [
-            'file'   => $e->originalFilename,
-            'size'   => $e->size,
-            'mime'   => $e->mimeType,
-            'sha256' => $e->sha256,
-            'at'     => $e->receivedAt->format(DATE_ATOM),
+        $this->logger->info('invoiceiq.pre_validate', [
+            'name' => $e->getOriginalFilename(),
+            'mime' => $e->getMimeType(),
+            'size' => $e->getSize(),
+            'hash' => $e->getSha256(),
         ]);
     }
 
-    public function onPost(PostValidateEvent $e): void
+    public function onPostValidate(PostValidateEvent $e): void
     {
-        $this->logger->info('post_validate', [
-            'sha256'      => $e->sha256,
-            'duration_ms' => $e->durationMs,
-            'status'      => $e->report->getStatus(),
-            'score'       => $e->report->getScore(),
+        $this->logger->info('invoiceiq.post_validate', [
+            'ms'     => $e->getDurationMs(),
+            'hash'   => $e->getSha256(),
+            'status' => $e->getReport()->getStatus(),
+            'score'  => $e->getReport()->getScore(),
         ]);
     }
 }
 ```
 
-### Stockage (optionnel)
-
-```yaml
+## Stockage optionnel (OFF par défaut)
+Active un stockage local de l’original (et ses métadonnées) + renvoie storage_key :
+```yml
 # config/packages/invoice_iq.yaml
 invoice_iq:
   storage:
-    enabled: true          # false par défaut
-    adapter: local         # v0.1
-    dir: '%kernel.project_dir%/var/invoiceiq'
+    enabled: true
+    adapter: 'local'                                   # v0.1
+    local_dir: '%kernel.project_dir%/var/invoiceiq'    # dossier cible
 ```
+- Si enabled: false : aucune écriture disque et pas de storage_key.
+
+## Troubleshooting
+
+- 400 – missing file : le champ file est absent.
+- 415 – unsupported media type : mimetype non supporté.
+- 200 + issues : parsing OK mais au moins une règle a levé une issue (TOTALS_MISMATCH VAT_FORMAT_SUSPECT, etc.).
+- Doublons : détection via store mémoire (hash SHA-256). v0.1 n’écrit pas encore en base.
+
+## Versionning & licence
+
+- Versionning : SemVer (MAJOR.MINOR.PATCH).
+- Licence : MIT.
+- Voir le CHANGELOG pour l’historique.
