@@ -16,6 +16,19 @@ final class InvoiceIQExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
+        $ocr = $config['ocr']['tesseract'];
+
+        $container->register('invoiceiq.ocr.tesseract', \Mlucas\InvoiceIQBundle\Infrastructure\Ocr\TesseractOcrClient::class)
+            ->addArgument($ocr['binary_path'])
+            ->addArgument($ocr['langs'])
+            ->addArgument($ocr['psm'])
+            ->addArgument($ocr['oem'])
+            ->addArgument($ocr['timeout'])
+            ->setPublic(false)
+            ->addTag('invoiceiq.ocr_client', ['alias' => 'tesseract'])
+            ->addAutowiringType(\Mlucas\InvoiceIQBundle\Domain\Ocr\OcrClientInterface::class);
+
+
         // Expose config as container parameters (facile à réutiliser/injecter)
         $container->setParameter('invoice_iq.ocr.provider', $config['ocr']['provider']);
         $container->setParameter('invoice_iq.checks.totals', $config['checks']['totals']);

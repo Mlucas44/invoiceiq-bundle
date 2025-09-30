@@ -74,3 +74,5 @@ services:
 
   # v0.1: un seul adapter => alias direct
   Mlucas\InvoiceIQBundle\Storage\StorageInterface: '@Mlucas\InvoiceIQBundle\Storage\LocalStorage'
+
+  Mlucas\InvoiceIQBundle\Domain\Ocr\OcrClientInterface: '@invoiceiq.ocr.tesseract'
